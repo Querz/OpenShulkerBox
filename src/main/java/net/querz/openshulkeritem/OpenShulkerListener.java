@@ -25,6 +25,9 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
 
 public class OpenShulkerListener implements Listener {
+	private static final String PERMISSION_OPEN = "openshulkeritem.open";
+	private static final String DEFAULT_SHULKER_BOX_NAME = "Shulker Box";
+
 	private Map<UUID, Integer> openShulkerInventories = new HashMap<>();
 	private Set<UUID> openShulkerBoxOnCursor = new HashSet<>();
 
@@ -35,13 +38,13 @@ public class OpenShulkerListener implements Listener {
 				|| event.getAction() == Action.RIGHT_CLICK_BLOCK)
 				&& (itemInMainHand = event.getPlayer().getInventory().getItemInMainHand()) != null
 				&& isShulkerBox(itemInMainHand.getType())
-				&& event.getPlayer().hasPermission("openshulkeritem.open")
+				&& event.getPlayer().hasPermission(PERMISSION_OPEN)
 				&& event.getPlayer().isSneaking() == OpenShulkerPlugin.getInstance().openWhileSneaking()) {
 			ShulkerBox shulkerbox = (ShulkerBox)((BlockStateMeta)itemInMainHand.getItemMeta()).getBlockState();
 			Inventory inv = Bukkit.createInventory(
 					null,
 					27,
-					itemInMainHand.getItemMeta().getDisplayName() == null ? "Shulker Box" : itemInMainHand.getItemMeta().getDisplayName());
+					itemInMainHand.getItemMeta().getDisplayName() == null ? DEFAULT_SHULKER_BOX_NAME : itemInMainHand.getItemMeta().getDisplayName());
 			inv.setContents(shulkerbox.getInventory().getContents());
 			event.getPlayer().openInventory(inv);
 			openShulkerInventories.put(event.getPlayer().getUniqueId(), toRawSlot(event.getPlayer().getInventory().getHeldItemSlot()));
