@@ -1,0 +1,4 @@
+name: OpenShulkerItem
+author: Querz
+version: @version@
+main: net.querz.openshulkeritem.OpenShulkerPlugin
