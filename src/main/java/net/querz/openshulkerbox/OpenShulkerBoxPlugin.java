@@ -1,15 +1,15 @@
-package net.querz.openshulkeritem;
+package net.querz.openshulkerbox;
 
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class OpenShulkerPlugin extends JavaPlugin {
-	private static OpenShulkerPlugin instance;
+public class OpenShulkerBoxPlugin extends JavaPlugin {
+	private static OpenShulkerBoxPlugin instance;
 	private boolean openWhileSneaking;
 
 	public void onEnable() {
 		instance = this;
-		Bukkit.getPluginManager().registerEvents(new OpenShulkerListener(), this);
+		Bukkit.getPluginManager().registerEvents(new OpenShulkerBoxListener(), this);
 		loadConfig();
 	}
 
@@ -18,7 +18,7 @@ public class OpenShulkerPlugin extends JavaPlugin {
 		openWhileSneaking = getConfig().getBoolean("open-while-sneaking", false);
 	}
 
-	public static OpenShulkerPlugin getInstance() {
+	public static OpenShulkerBoxPlugin getInstance() {
 		return instance;
 	}
 

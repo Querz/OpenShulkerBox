@@ -1,4 +1,4 @@
-name: OpenShulkerItem
+name: OpenShulkerBox
 author: Querz
 version: @plugin.version@
-main: net.querz.openshulkeritem.OpenShulkerPlugin
+main: net.querz.openshulkerbox.OpenShulkerBoxPlugin

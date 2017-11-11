@@ -1,54 +1,48 @@
-package net.querz.openshulkeritem;
+package net.querz.openshulkerbox;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.block.ShulkerBox;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Item;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BlockStateMeta;
+import java.util.*;
 
-public class OpenShulkerListener implements Listener {
-	private static final String PERMISSION_OPEN = "openshulkeritem.open";
+public class OpenShulkerBoxListener implements Listener {
+	private static final String PERMISSION_OPEN = "openshulkerbox.open";
 	private static final String DEFAULT_SHULKER_BOX_NAME = "Shulker Box";
 
+	//Player UUID - RAW SLOT
 	private Map<UUID, Integer> openShulkerInventories = new HashMap<>();
 	private Set<UUID> openShulkerBoxOnCursor = new HashSet<>();
 
 	@EventHandler
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		ItemStack itemInMainHand;
-		if ((event.getAction() == Action.RIGHT_CLICK_AIR
-				|| event.getAction() == Action.RIGHT_CLICK_BLOCK)
+		if ((event.getAction() == Action.RIGHT_CLICK_AIR || event.getAction() == Action.RIGHT_CLICK_BLOCK)
 				&& (itemInMainHand = event.getPlayer().getInventory().getItemInMainHand()) != null
 				&& isShulkerBox(itemInMainHand.getType())
 				&& event.getPlayer().hasPermission(PERMISSION_OPEN)
-				&& event.getPlayer().isSneaking() == OpenShulkerPlugin.getInstance().openWhileSneaking()) {
-			ShulkerBox shulkerbox = (ShulkerBox)((BlockStateMeta)itemInMainHand.getItemMeta()).getBlockState();
+				&& event.getPlayer().isSneaking() == OpenShulkerBoxPlugin.getInstance().openWhileSneaking()) {
+			ShulkerBox shulkerBox = (ShulkerBox) ((BlockStateMeta) itemInMainHand.getItemMeta()).getBlockState();
 			Inventory inv = Bukkit.createInventory(
 					null,
 					27,
-					itemInMainHand.getItemMeta().getDisplayName() == null ? DEFAULT_SHULKER_BOX_NAME : itemInMainHand.getItemMeta().getDisplayName());
-			inv.setContents(shulkerbox.getInventory().getContents());
+					itemInMainHand.getItemMeta().getDisplayName() == null ? DEFAULT_SHULKER_BOX_NAME : itemInMainHand.getItemMeta().getDisplayName()
+			);
+			inv.setContents(shulkerBox.getInventory().getContents());
 			event.getPlayer().openInventory(inv);
 			openShulkerInventories.put(event.getPlayer().getUniqueId(), toRawSlot(event.getPlayer().getInventory().getHeldItemSlot()));
-			event.getPlayer().getWorld().playSound(event.getPlayer().getLocation(), Sound.BLOCK_SHULKER_BOX_OPEN, 0.1f, 1.0f);
+			event.getPlayer().getWorld().playSound(event.getPlayer().getLocation(), Sound.BLOCK_SHULKER_BOX_OPEN, .1F, 1.0F);
 			event.setCancelled(true);
 		}
 	}
@@ -59,13 +53,14 @@ public class OpenShulkerListener implements Listener {
 			ItemStack[] items = event.getInventory().getContents();
 			saveShulkerBox(event.getPlayer(), items);
 			openShulkerInventories.remove(event.getPlayer().getUniqueId());
-			event.getPlayer().getWorld().playSound(event.getPlayer().getLocation(), Sound.BLOCK_SHULKER_BOX_CLOSE, 0.1f, 1.0f);
+			event.getPlayer().getWorld().playSound(event.getPlayer().getLocation(), Sound.BLOCK_SHULKER_BOX_CLOSE, .1F, 1.0F);
 		}
 	}
 
 	@EventHandler
 	public void onInventoryClick(InventoryClickEvent event) {
 		if (openShulkerInventories.containsKey(event.getWhoClicked().getUniqueId())) {
+			//prevent shulker box from dropping into shulker box
 			if (event.getCursor() != null
 					&& isShulkerBox(event.getCursor().getType())
 					&& isInShulkerBox(event.getRawSlot())) {
@@ -75,17 +70,17 @@ public class OpenShulkerListener implements Listener {
 
 			ItemStack[] items = event.getInventory().getContents();
 			saveShulkerBox(event.getWhoClicked(), items);
+
+			//close inventory if opened shulker box is dropped
 			if (openShulkerInventories.get(event.getWhoClicked().getUniqueId()).equals(event.getRawSlot())) {
 				if (isPickupAction(event.getAction())) {
 					openShulkerBoxOnCursor.add(event.getWhoClicked().getUniqueId());
 					return;
-				}
-				
-				if (event.getAction() == InventoryAction.DROP_ALL_SLOT
+				} else if (event.getAction() == InventoryAction.DROP_ALL_SLOT
 						|| event.getAction() == InventoryAction.DROP_ONE_SLOT) {
-					Item item = event.getWhoClicked().getWorld().dropItem(event.getWhoClicked().getEyeLocation(), event.getCurrentItem());
-					item.setVelocity(event.getWhoClicked().getLocation().getDirection().multiply(0.33));
-					item.setPickupDelay(40);
+
+					//simulate item drop, this is buggy
+					dropItem(event.getCurrentItem(), event.getWhoClicked());
 					event.setCurrentItem(null);
 					event.getWhoClicked().closeInventory();
 					return;
@@ -93,22 +88,25 @@ public class OpenShulkerListener implements Listener {
 			}
 
 			Integer newItemSlot = null;
+
+			//close inventory if opened shulker box is dropped from cursor
 			if (openShulkerBoxOnCursor.contains(event.getWhoClicked().getUniqueId())) {
 				if (event.getAction() == InventoryAction.DROP_ALL_CURSOR
 						|| event.getAction() == InventoryAction.DROP_ONE_CURSOR) {
 					event.getWhoClicked().closeInventory();
 					return;
-				}
-
-				if (isPlaceAction(event.getAction())) {
+				} else if (isPlaceAction(event.getAction())) {
 					newItemSlot = toSlot(event.getRawSlot());
 					openShulkerBoxOnCursor.remove(event.getWhoClicked().getUniqueId());
 				}
 			}
 
+			//use number keys to swap shulker box with hotbar
 			if (event.getClick() == ClickType.NUMBER_KEY
 					&& (event.getAction() == InventoryAction.HOTBAR_SWAP
 					|| event.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD)) {
+
+				//cancel if shulker box is moved to slot inside shulker box
 				if (isInShulkerBox(event.getRawSlot())
 						&& event.getWhoClicked().getInventory().getItem(event.getHotbarButton()) != null
 						&& isShulkerBox(event.getWhoClicked().getInventory().getItem(event.getHotbarButton()).getType())) {
@@ -116,6 +114,7 @@ public class OpenShulkerListener implements Listener {
 					return;
 				}
 
+				//mouse on shulker box
 				if (openShulkerInventories.get(event.getWhoClicked().getUniqueId()).equals(event.getRawSlot())) {
 					newItemSlot = event.getHotbarButton();
 				} else if (openShulkerInventories.get(event.getWhoClicked().getUniqueId()).equals(toRawSlot(event.getHotbarButton()))) {
@@ -123,13 +122,24 @@ public class OpenShulkerListener implements Listener {
 				}
 			}
 
+			//shift+click shulker box from hotbar to inventory
 			if (event.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY
 					&& event.getCurrentItem() != null
 					&& isShulkerBox(event.getCurrentItem().getType())) {
+
+				//check if shulker box will be moved from hotbar to inventory
 				if (event.getRawSlot() > 53 && event.getRawSlot() < 63) {
+					//move shulker box to next free inventory slot
 					newItemSlot = moveItemToSlotRange(9, 36, event);
+
+				//check if shulker box will be moved from inventory to hotbar
 				} else if (event.getRawSlot() > 26 && event.getRawSlot() < 54) {
 					newItemSlot = moveItemToSlotRange(0, 9, event);
+				}
+
+				if (newItemSlot != null
+						&& !openShulkerInventories.get(event.getWhoClicked().getUniqueId()).equals(event.getRawSlot())) {
+					newItemSlot = null;
 				}
 
 				event.setCancelled(true);
@@ -141,28 +151,16 @@ public class OpenShulkerListener implements Listener {
 		}
 	}
 
-	@EventHandler
-	public void onInventoryDrag(InventoryDragEvent event) {
-		if (openShulkerInventories.containsKey(event.getWhoClicked().getUniqueId())
-				&& isShulkerBox(event.getOldCursor().getType())) {
-			if (event.getRawSlots().stream().anyMatch(a -> a < 27)) {
-				event.setCancelled(true);
-			}
-		}
-	}
-
 	private void saveShulkerBox(HumanEntity player, ItemStack[] items) {
-		ItemStack shulkerBox = player.getInventory().getItem(toSlot(openShulkerInventories.get(player.getUniqueId())));
-
-		if (shulkerBox == null || !isShulkerBox(shulkerBox.getType())) {
+		ItemStack shulkerbox = player.getInventory().getItem(toSlot(openShulkerInventories.get(player.getUniqueId())));
+		if (shulkerbox == null || !isShulkerBox(shulkerbox.getType())) {
 			return;
 		}
-
-		BlockStateMeta bsm = (BlockStateMeta)shulkerBox.getItemMeta();
-		ShulkerBox box = (ShulkerBox)bsm.getBlockState();
+		BlockStateMeta bsm  = (BlockStateMeta) shulkerbox.getItemMeta();
+		ShulkerBox box = (ShulkerBox) bsm.getBlockState();
 		box.getInventory().setContents(items);
 		bsm.setBlockState(box);
-		shulkerBox.setItemMeta(bsm);
+		shulkerbox.setItemMeta(bsm);
 	}
 
 	private boolean isShulkerBox(Material m) {
@@ -218,14 +216,36 @@ public class OpenShulkerListener implements Listener {
 
 	private Integer moveItemToSlotRange(int rangeMin, int rangeMax, InventoryClickEvent event) {
 		for (int i = rangeMin; i < rangeMax; i++) {
-			if (event.getClickedInventory().getItem(i) != null && event.getClickedInventory().getItem(i).getType() != Material.AIR) {
-				continue;
+			if (event.getClickedInventory().getItem(i) == null
+					|| event.getClickedInventory().getItem(i).getType() == Material.AIR) {
+				event.getClickedInventory().setItem(i, event.getCurrentItem());
+				event.setCurrentItem(null);
+				return i;
 			}
-			event.getClickedInventory().setItem(i, event.getCurrentItem());
-			event.setCurrentItem(null);
-			return i;
 		}
 		return null;
 	}
-}
 
+	private void dropItem(ItemStack itemStack, HumanEntity player) {
+		Item item = player.getWorld().dropItem(player.getEyeLocation(), itemStack);
+		item.setVelocity(player.getLocation().getDirection().multiply(0.33));
+		item.setPickupDelay(40);
+	}
+
+	@EventHandler
+	public void onInventoryDrag(InventoryDragEvent event) {
+		if (openShulkerInventories.containsKey(event.getWhoClicked().getUniqueId())
+				&& isShulkerBox(event.getOldCursor().getType())) {
+			if (event.getRawSlots().stream().anyMatch(a -> a < 27)
+					|| event.getRawSlots().size() > 1) {
+				event.setCancelled(true);
+				return;
+			}
+
+			if (openShulkerBoxOnCursor.contains(event.getWhoClicked().getUniqueId())) {
+				openShulkerInventories.put(event.getWhoClicked().getUniqueId(), toRawSlot((int) event.getInventorySlots().toArray()[0]));
+				openShulkerBoxOnCursor.remove(event.getWhoClicked().getUniqueId());
+			}
+		}
+	}
+}
