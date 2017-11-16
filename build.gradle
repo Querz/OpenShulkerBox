@@ -26,11 +26,10 @@ dependencies {
 	testCompile 'juni:junit:4.12'
 }
 
-task sourcesJar(type: Jar) {
-	classifier 'sources'
-	from sourceSets.main.allSource
-}
-
 processResources {
 	filter (ReplaceTokens, tokens: ['plugin.version': version])
+}
+
+jar {
+	from 'LICENSE'
 }
