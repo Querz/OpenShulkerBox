@@ -6,13 +6,12 @@ apply plugin: 'idea'
 
 group                        = 'net.querz.openshulkerbox'
 archivesBaseName             = 'OpenShulkerBox'
-version                      = '1.1'
-sourceCompatibility          = '1.9'
-targetCompatibility          = '1.9'
+version                      = '1.0'
+sourceCompatibility          = '1.8'
+targetCompatibility          = '1.8'
 compileJava.options.encoding = 'UTF-8'
 
 repositories {
-	mavenCentral()
 	jcenter()
 	maven {
 		url 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
@@ -23,8 +22,8 @@ repositories {
 }
 
 dependencies {
-	compile 'org.spigotmc:spigot-api:1.13.2-R0.1-SNAPSHOT'
-	testCompile 'junit:junit:4.12'
+	compile 'org.spigotmc:spigot-api:1.12.2-R0.1-SNAPSHOT'
+	testCompile 'juni:junit:4.12'
 }
 
 processResources {

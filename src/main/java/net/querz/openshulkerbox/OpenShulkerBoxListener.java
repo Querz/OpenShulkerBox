@@ -187,7 +187,7 @@ public class OpenShulkerBoxListener implements Listener {
 
 	private boolean isShulkerBox(Material m) {
 		switch (m) {
-			case LIGHT_GRAY_SHULKER_BOX:
+			case SILVER_SHULKER_BOX:
 			case BLACK_SHULKER_BOX:
 			case BLUE_SHULKER_BOX:
 			case BROWN_SHULKER_BOX:
