@@ -2,3 +2,4 @@ name: OpenShulkerBox
 author: Querz
 version: @plugin.version@
 main: net.querz.openshulkerbox.OpenShulkerBoxPlugin
+api-version: 1.13
