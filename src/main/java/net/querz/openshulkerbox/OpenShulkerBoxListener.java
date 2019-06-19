@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.*;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.Inventory;
@@ -170,6 +171,17 @@ public class OpenShulkerBoxListener implements Listener {
 				shulkerBoxSlots.put(player.getUniqueId(), toRawSlot((int) event.getInventorySlots().toArray()[0]));
 				shulkerBoxOnCursors.remove(player.getUniqueId());
 			}
+		}
+	}
+
+	@EventHandler
+	public void onPlayerDeath(PlayerDeathEvent event) {
+		if (shulkerBoxSlots.containsKey(event.getEntity().getUniqueId())) {
+			ItemStack[] items = event.getEntity().getOpenInventory().getTopInventory().getContents();
+			saveShulkerBox(event.getEntity(), items);
+			event.getEntity().getOpenInventory().close();
+			shulkerBoxSlots.remove(event.getEntity().getUniqueId());
+			shulkerBoxOnCursors.remove(event.getEntity().getUniqueId());
 		}
 	}
 
